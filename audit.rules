@@ -1,0 +1,83 @@
+# etc/audit/audit.rules
+# Sample set of audit rules for capturing basic security data.
+# -k keys are for human readability and can be removed in practice
+# MIT License - Maestretti 2016
+
+# Remove any existing rules
+-D
+# Buffer Size
+-b 8192
+# Failure Mode
+-f 2
+
+# Performance excludes
+# Exclude actions of privileged processes. Rules are evaluated in order. 
+# You will not catch misbehaved daemons and system processes
+# -a exit,never -F arch=b64 -S execve -F auid<60000 
+# -a exit,never -F arch=b64 -S execve -F auid=4294967295
+# -a exit,never -F arch=b64 -S open -F auid<60000 
+# -a exit,never -F arch=b64 -S open -F auid=4294967295
+#
+# -a exit,never -F arch=b32 -F dir=/tmp/
+# -a exit,never -F arch=b64 -F dir=/tmp/
+# -a exit,never -F arch=b32 -F dir=/dev/shm/
+# -a exit,never -F arch=b64 -F dir=/dev/shm/
+# -a exit,never -F arch=b32 -F dir=/var/lock/lvm/
+# -a exit,never -F arch=b64 -F dir=/var/lock/lvm/
+
+# File Integrity Monitoring (FIM) of configuration
+# -w path-to-file -p wa -k FIM
+-w /etc/group -p wa -k identity
+-w /etc/passwd -p wa -k identity
+-w /etc/sudoers -p wa -k identity
+-w /var/run/utmp -p wa -k session
+-w /var/log/wtmp -p wa -k session
+-w /var/log/btmp -p wa -k session
+# -w /etc/selinux/ -p wa -k MAC-policy
+# -w /etc/apparmor.d/ -p wa
+-w /etc/rsyslog.d/ -p wa
+-w /etc/audit/audit.rules -p wa
+
+# Credential Access
+# -w path-to-file -p rwa -k identity
+-w /etc/shadow -p rwa -k identity
+-w /root/.ssh/authorized_keys -p wa -k identity
+# auditd does not support wildcards, so you should ideally 
+# add each user’s authorized_keys file to this 
+
+# File Access Failed Attempts
+-a exit,always -F arch=b32 -S open -S openat -F exit=-EACCES -k accessFail
+-a exit,always -F arch=b32 -S open -S openat -F exit=-EPERM -k accessFail
+-a exit,always -F arch=b64 -S open -S openat -F exit=-EACCES -k accessFail
+-a exit,always -F arch=b64 -S open -S openat -F exit=-EPERM -k accessFail
+
+# Process Execution
+-a exit,always -F arch=b32 -S execve -k exec
+-a exit,always -F arch=b64 -S execve -k exec
+
+# Escalation / Injection - kernel loads and ptrace
+-a exit,always -F arch=b64 -S init_module -S finit_module -S ptrace
+-a exit,always -F arch=b32 -S init_module -S finit_module -S ptrace
+
+# Network Sockets
+-a exit,always -F arch=b64 -S socket -F a0=2
+-a exit,always -F arch=b32 -S socket -F a0=2
+-a exit,always -F arch=b64 -S socket -F a0=10
+-a exit,always -F arch=b32 -S socket -F a0=10
+
+# CIS Benchmark
+# time of day, hostname, domain, etc
+-a always,exit -S adjtimex -S settimeofday -S stime -k time-change
+-a always,exit -S clock_settime -k time-change
+-a always,exit -S sethostname -S setdomainname -k system-locale
+-w /etc/issue -p wa -k system-locale
+-w /etc/issue.net -p wa -k system-locale
+-w /etc/hosts -p wa -k system-locale
+-w /etc/sysconfig/network -p wa -k system-locale
+# permission mod, other than root
+-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod
+-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod
+-a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod
+-a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod
+-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod
+-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod

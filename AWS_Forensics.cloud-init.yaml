@@ -1,0 +1,74 @@
+#cloud-config
+# General Forensic Operational Box for AWS EC2
+# Package Footprint: 314MB fetch, 1324MB installed
+# MIT License - Maestretti 2016
+package_upgrade: true
+packages:
+ - awscli
+ - python-pip
+# Disk Forensics
+ - scalpel
+ - sleuthkit
+ - plaso
+ # ext
+ - ext4magic
+ - extundelete
+ # File Recovery / Reading
+ - unzip
+ - bcrypt
+ - ccrypt 
+ - gzrt
+ - foremost
+ - p7zip
+ - unrar
+ # File Search / Compare
+ - fdupes
+ - kdiff3
+ - ssdeep
+ - hashdeep
+ - vbindiff
+# Memory Forensics
+ - volatility
+ - volatility-tools
+ - lime-forensics-dkms
+ - yara
+# Reversing (lite)
+ - ht
+ - aeskeyfind
+ - rsakeyfind
+ - ent
+ - clamav
+ - shed
+# Compilers
+ - build-essential
+ - gcc
+ - gdb
+ - git
+ - ipython
+# Secure Files
+ - gnupg
+ - pwgen
+# Applications
+ - screen
+ - apt-utils
+# Network
+ - netcat
+ - socat
+ - tcpdump
+ - tshark
+ - masscan
+ - traceroute
+ - tcptraceroute
+
+users:
+  - name: firstlast
+    groups: users,admin
+    ssh-authorized_keys:
+      - ssh-rsa PUBLICKEYPASTEDHERE
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+
+# Use this section to download additional scripts specific to your environment
+#runcmd:
+ # - aws s3 cp s3://forensics/response_scripts.deb . 
+ # - dpkg -i response_scripts.deb
