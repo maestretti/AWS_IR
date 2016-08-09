@@ -1,22 +1,24 @@
 #vim:syntax=apparmor
 # Experimental -- attempt to use AppArmor as an audit function.
 # MIT License - Alex Maestretti 2016
-# AppArmor is already inspecting system calls by default in Ubuntu
-# if we can use it to audit, we don't need to turn on the k/auditd 
+# AppArmor is already inspecting system calls by default in Ubuntu.
+# If we can use it to audit, we don't need to turn on the k/auditd 
 # framework and can save some performance cost.
 # Goals are file integrity, network sockets and process execution.
 
 profile global /** flags=(complain) {
 
-	# Allow all top level rule types
-        #file,  ## can't allow file here as we get a pattern overload when we try to audit exec's below (wonder if we can quite instead)
-        # audit all network syscalls (could down select to just connect / accept, but again pattern overload)
+		# Allow all top level rule types
+        #file,  ## can't allow all 'file' as we get a pattern overload when we try to audit below 
+        # audit ALL network syscalls, even send/recv, very verbose
+        # selecting network permissions (connect, accept, bind) only supported in 3.0
         audit network,
         capability,
         # audit mounts and process injection w/ ptrace
         audit mount,
         audit ptrace,
         signal,
+        dbus,
         
         # These top level rules aren't implemented yet, but mentioned in docs
         #unix,
@@ -26,10 +28,10 @@ profile global /** flags=(complain) {
         #ipc,
         #rlimit,
 
-	# allow all file accesses, except execute
+		# allow all file accesses, except execute
         /** rwlkm,
-        # attempt to audit all executions (doesn't seem to work within bash, but sh does, doesn't recognize just x as a mode)
-        audit /** ux,
+        # audit all executions. i - inherit current confinement, x - execute
+        audit /** ix,
         
         # audit specific file reads / writes for File Integrity Monitoring
         audit /tmp/file.txt rw,
