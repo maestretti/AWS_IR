@@ -20,7 +20,7 @@ profile global /** flags=(complain) {
         signal,
         dbus,
         
-        # These top level rules aren't implemented yet, but mentioned in docs
+        # These top level rules aren't implemented until Ubuntu Xenial
         #unix,
         #audit chown,
         #audit chmod,
@@ -36,6 +36,6 @@ profile global /** flags=(complain) {
         # audit specific file reads / writes for File Integrity Monitoring
         audit /tmp/file.txt rw,
 
-	# doesn't seem to work, but doesn't break anything, would be nice to audit CAPs        
+		# audit specific SELinux Capabilities of interest      
         audit capability chown,
 }
